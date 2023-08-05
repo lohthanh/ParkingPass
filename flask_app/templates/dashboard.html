@@ -39,7 +39,11 @@
                 </table>
             </div>
             {% else %}
-            <h2>User Dashboard</h2>
+            <div>
+                <h2>User Dashboard</h2>
+                <p>{{logged_user.email}}</p>
+                <button><a href="/users/{{logged_user.id}}/edit">Edit User Info</a></button>
+            </div>
             {% endif %}
         </div>
     </div>

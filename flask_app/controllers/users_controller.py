@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask_app import app
-from flask import render_template, redirect, request, flash, session, url_for
+from flask import render_template, redirect, request, flash, session
 from flask_app.models.user_model import User
 from flask_bcrypt import Bcrypt
 
@@ -61,7 +61,6 @@ def dashboard():
         "dashboard.html", logged_user=logged_user, all_users=all_users
     )
 
-
 @app.route("/users/<int:id>/view")
 def view_info(id):
     session_data = {"id": session["user_id"]}
@@ -74,6 +73,37 @@ def view_info(id):
     return render_template(
         "info.html", one_user=one_user, last_logged_on=last_logged_on, logged_user=logged_user
     )
+
+@app.route('/users/<int:id>/edit')
+def edit_user(id):
+    data = {
+        'id' : id
+    }
+    one_user = User.get_one_user(data)
+    return render_template('edit.html', one_user=one_user)
+
+@app.route('/users/<int:id>/update', methods=['POST'])
+def update(id):
+    data = {
+        **request.form,
+        'id' : id
+    }
+    User.update(data)
+    return redirect(f'/users/{id}/view')
+
+@app.route('/users/<int:id>/update', methods=['POST'])
+def update(id):
+    data = {
+        **request.form,
+        'id' : id
+    }
+    User.update(data)
+    return redirect(f'/users/{id}/view')
+
+@app.route('/users/delete/<int:user_id>')
+def delete(user_id):
+    User.delete(user_id)
+    return redirect('/dashboard')
 
 
 @app.route("/users/logout")

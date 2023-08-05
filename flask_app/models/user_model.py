@@ -1,8 +1,9 @@
-from datetime import datetime
 from flask_app.config.mysqlconnection import connectToMySQL
 from flask_app import DB
 import re
 from flask import flash
+from flask_app.models import keycard_model
+
 
 
 ALPHA = re.compile(r"^[a-zA-Z]+$")
@@ -24,6 +25,8 @@ class User:
         self.last_logged_on = data["last_logged_on"]
         self.created_at = data["created_at"]
         self.updated_at = data["updated_at"]
+        self.keycards = []
+        
 
     @classmethod
     def create(cls, data):  # same as save()
@@ -45,6 +48,14 @@ class User:
     def get_by_email(cls, data):
         query = """SELECT * FROM users
                 WHERE email = %(email)s;"""
+        results = connectToMySQL(DB).query_db(query, data)
+        if results:
+            return cls(results[0])
+        return False
+    
+    @classmethod
+    def get_by_employee_id(cls, data):
+        query = """SELECT * FROM users WHERE employee_id = %(employee_id)s;"""
         results = connectToMySQL(DB).query_db(query, data)
         if results:
             return cls(results[0])
@@ -84,6 +95,22 @@ class User:
     
     def get_last_logged_on(self):
         return self.last_logged_on
+    
+    @classmethod
+    def update(cls, data):
+        query = """
+                UPDATE users
+                SET first_name = %(first_name)s, last_name = %(last_name)s, email = %(email)s, password = %(password)s, 
+                WHERE id = %(id)s;
+        """
+        results = connectToMySQL(DB).query_db(query, data)
+        return results
+
+    @classmethod
+    def delete(cls, id):
+        query = "DELETE FROM users WHERE id = %(id)s"
+        results = connectToMySQL(DB).query_db(query, {'id' : id})
+        return results
 
     @staticmethod
     def validate_data(data):
@@ -113,10 +140,14 @@ class User:
             is_valid = False
             flash("Email must be a valid format", "registration")
         else:
-            user_data = {"email": data["email"]}
+            user_data = {"email": data["email"], "employee_id": data["employee_id"]}
             potential_user = User.get_by_email(user_data)
+            potential_employee = User.get_by_employee_id(user_data)
             if potential_user:
                 flash("Email already exists!", "registration")
+                is_valid = False
+            if potential_employee:
+                flash("Employee ID already exists!", "registration")
                 is_valid = False
         if len(data["password"]) < 1:
             is_valid = False
